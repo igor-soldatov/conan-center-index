@@ -53,6 +53,8 @@ class DisruptorCppConan(ConanFile):
         tc.cache_variables["DISRUPTOR_BUILD_TESTS"] = False
         tc.cache_variables["DISRUPTOR_BUILD_SHARED"] = self.options.shared
         tc.cache_variables["DISRUPTOR_BUILD_STATIC"] = not self.options.shared
+        if self.settings.os == "Windows" and self.options.shared:
+            tc.cache_variables["CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS"] = True
         tc.generate()
 
         deps = CMakeDeps(self)

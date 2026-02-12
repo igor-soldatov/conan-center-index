@@ -1,4 +1,4 @@
-﻿diff --git a/CMakeLists.txt b/CMakeLists.txt
+diff --git a/CMakeLists.txt b/CMakeLists.txt
 index 6a31b08..4599187 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
@@ -10,7 +10,7 @@ index 6a31b08..4599187 100644
  set(DISRUPTOR_VERSION_MAJOR "1")
  set(DISRUPTOR_VERSION_MINOR "0")
 diff --git a/Disruptor/CMakeLists.txt b/Disruptor/CMakeLists.txt
-index 6f9bc4f..e6eaf08 100644
+index 6f9bc4f..87c555d 100644
 --- a/Disruptor/CMakeLists.txt
 +++ b/Disruptor/CMakeLists.txt
 @@ -9,6 +9,11 @@ endif()
@@ -25,7 +25,7 @@ index 6f9bc4f..e6eaf08 100644
  
  set(Disruptor_sources
  
-@@ -114,18 +119,24 @@ set(Disruptor_headers
+@@ -114,18 +119,25 @@ set(Disruptor_headers
      YieldingWaitStrategy.h
  )
  
@@ -55,9 +55,36 @@ index 6f9bc4f..e6eaf08 100644
  
 -install(TARGETS DisruptorShared DisruptorStatic
 +install(TARGETS ${disruptor_install_targets}
++    RUNTIME DESTINATION bin
      LIBRARY DESTINATION lib
      ARCHIVE DESTINATION lib
  )
+diff --git a/Disruptor/Sequence.cpp b/Disruptor/Sequence.cpp
+index fa64db9..9e9f9b9 100644
+--- a/Disruptor/Sequence.cpp
++++ b/Disruptor/Sequence.cpp
+@@ -7,8 +7,6 @@
+ namespace Disruptor
+ {
+ 
+-    const std::int64_t Sequence::InitialCursorValue = -1;
+-    
+     Sequence::Sequence(std::int64_t initialValue)
+         : m_fieldsValue(initialValue)
+     {
+diff --git a/Disruptor/Sequence.h b/Disruptor/Sequence.h
+index f8628e4..6005e62 100644
+--- a/Disruptor/Sequence.h
++++ b/Disruptor/Sequence.h
+@@ -62,7 +62,7 @@ namespace Disruptor
+         /**
+          * Set to -1 as sequence starting point
+          */ 
+-        static const std::int64_t InitialCursorValue;
++        static constexpr std::int64_t InitialCursorValue = -1;
+ 
+     private:
+         char m_padding0[56] = {};
 diff --git a/Disruptor/TypeInfo.h b/Disruptor/TypeInfo.h
 index 8230d43..d2cd2c1 100644
 --- a/Disruptor/TypeInfo.h
