@@ -1,0 +1,101 @@
+﻿diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 6a31b08..4599187 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,5 +1,5 @@
+-project(Disruptor)
+ cmake_minimum_required(VERSION 2.6)
++project(Disruptor)
+ 
+ set(DISRUPTOR_VERSION_MAJOR "1")
+ set(DISRUPTOR_VERSION_MINOR "0")
+diff --git a/Disruptor/CMakeLists.txt b/Disruptor/CMakeLists.txt
+index 6f9bc4f..e6eaf08 100644
+--- a/Disruptor/CMakeLists.txt
++++ b/Disruptor/CMakeLists.txt
+@@ -9,6 +9,11 @@ endif()
+ 
+ include_directories("..")
+ 
++option(DISRUPTOR_BUILD_SHARED "Build shared library" ON)
++option(DISRUPTOR_BUILD_STATIC "Build static library" ON)
++
++set(disruptor_install_targets "")
++
+ 
+ set(Disruptor_sources
+ 
+@@ -114,18 +119,24 @@ set(Disruptor_headers
+     YieldingWaitStrategy.h
+ )
+ 
+-add_library(DisruptorShared SHARED ${Disruptor_sources})
+-target_link_libraries(DisruptorShared ${Boost_LIBRARIES})
+-set_target_properties(DisruptorShared PROPERTIES OUTPUT_NAME Disruptor)
+-set_target_properties(DisruptorShared PROPERTIES VERSION ${DISRUPTOR_VERSION})
+-set_target_properties(DisruptorShared PROPERTIES SOVERSION ${DISRUPTOR_VERSION_MAJOR})
++if(DISRUPTOR_BUILD_SHARED)
++    add_library(DisruptorShared SHARED ${Disruptor_sources})
++    target_link_libraries(DisruptorShared ${Boost_LIBRARIES})
++    set_target_properties(DisruptorShared PROPERTIES OUTPUT_NAME Disruptor)
++    set_target_properties(DisruptorShared PROPERTIES VERSION ${DISRUPTOR_VERSION})
++    set_target_properties(DisruptorShared PROPERTIES SOVERSION ${DISRUPTOR_VERSION_MAJOR})
++    list(APPEND disruptor_install_targets DisruptorShared)
++endif()
+ 
+-add_library(DisruptorStatic STATIC ${Disruptor_sources})
+-set_target_properties(DisruptorStatic PROPERTIES OUTPUT_NAME Disruptor)
++if(DISRUPTOR_BUILD_STATIC)
++    add_library(DisruptorStatic STATIC ${Disruptor_sources})
++    set_target_properties(DisruptorStatic PROPERTIES OUTPUT_NAME Disruptor)
++    list(APPEND disruptor_install_targets DisruptorStatic)
++endif()
+ 
+ install(FILES ${Disruptor_headers} DESTINATION include/Disruptor)
+ 
+-install(TARGETS DisruptorShared DisruptorStatic
++install(TARGETS ${disruptor_install_targets}
+     LIBRARY DESTINATION lib
+     ARCHIVE DESTINATION lib
+ )
+diff --git a/Disruptor/TypeInfo.h b/Disruptor/TypeInfo.h
+index 8230d43..d2cd2c1 100644
+--- a/Disruptor/TypeInfo.h
++++ b/Disruptor/TypeInfo.h
+@@ -50,7 +50,7 @@ namespace std
+ {
+ 
+     template <>
+-    struct hash< Disruptor::TypeInfo > : public unary_function< Disruptor::TypeInfo, size_t >
++    struct hash< Disruptor::TypeInfo >
+     {
+     public:
+         size_t operator()(const Disruptor::TypeInfo& value) const
+diff --git a/Disruptor/stdafx.h b/Disruptor/stdafx.h
+index 8eae8af..0686fbd 100644
+--- a/Disruptor/stdafx.h
++++ b/Disruptor/stdafx.h
+@@ -13,12 +13,23 @@
+ #  define WIN32_LEAN_AND_MEAN    // Exclude rarely-used stuff from Windows headers
+ # endif
+ 
++# ifndef NOMINMAX
++#  define NOMINMAX
++# endif
++
+ # pragma warning(disable: 4512) // Assignment operator could not be generated
+ 
+ # include "targetver.h"
+ # include <tchar.h>
+ # include <winsock2.h>
+ # include <Windows.h>
++
++# ifdef max
++#  undef max
++# endif
++# ifdef min
++#  undef min
++# endif
+ #endif
+ 
+ // STL includes

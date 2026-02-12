@@ -1,7 +1,7 @@
 from conan import ConanFile
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
-from conan.tools.files import copy, get, replace_in_file
+from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get
 import os
 
 
@@ -29,11 +29,14 @@ class DisruptorCppConan(ConanFile):
 
     implements = ["auto_shared_fpic"]
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("boost/1.83.0", transitive_headers=True, transitive_libs=True)
+        self.requires("boost/[>=1.83 <1.91]", transitive_headers=True, transitive_libs=True)
 
     def validate(self):
         check_min_cppstd(self, 14)
@@ -43,82 +46,7 @@ class DisruptorCppConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        root_cmake_lists = os.path.join(self.source_folder, "CMakeLists.txt")
-        replace_in_file(
-            self,
-            root_cmake_lists,
-            "project(Disruptor)\ncmake_minimum_required(VERSION 2.6)",
-            "cmake_minimum_required(VERSION 2.6)\nproject(Disruptor)",
-        )
-
-        cmake_lists = os.path.join(self.source_folder, "Disruptor", "CMakeLists.txt")
-        replace_in_file(
-            self,
-            cmake_lists,
-            "include_directories(\"..\")\n\n",
-            "include_directories(\"..\")\n\n"
-            "option(DISRUPTOR_BUILD_SHARED \"Build shared library\" ON)\n"
-            "option(DISRUPTOR_BUILD_STATIC \"Build static library\" ON)\n\n",
-        )
-
-        replace_in_file(
-            self,
-            cmake_lists,
-            """add_library(DisruptorShared SHARED ${Disruptor_sources})
-target_link_libraries(DisruptorShared ${Boost_LIBRARIES})
-set_target_properties(DisruptorShared PROPERTIES OUTPUT_NAME Disruptor)
-set_target_properties(DisruptorShared PROPERTIES VERSION ${DISRUPTOR_VERSION})
-set_target_properties(DisruptorShared PROPERTIES SOVERSION ${DISRUPTOR_VERSION_MAJOR})
-
-add_library(DisruptorStatic STATIC ${Disruptor_sources})
-set_target_properties(DisruptorStatic PROPERTIES OUTPUT_NAME Disruptor)
-""",
-            """set(disruptor_targets \"\")
-if(DISRUPTOR_BUILD_SHARED)
-    add_library(DisruptorShared SHARED ${Disruptor_sources})
-    target_link_libraries(DisruptorShared ${Boost_LIBRARIES})
-    set_target_properties(DisruptorShared PROPERTIES OUTPUT_NAME Disruptor)
-    set_target_properties(DisruptorShared PROPERTIES VERSION ${DISRUPTOR_VERSION})
-    set_target_properties(DisruptorShared PROPERTIES SOVERSION ${DISRUPTOR_VERSION_MAJOR})
-    list(APPEND disruptor_targets DisruptorShared)
-endif()
-
-if(DISRUPTOR_BUILD_STATIC)
-    add_library(DisruptorStatic STATIC ${Disruptor_sources})
-    set_target_properties(DisruptorStatic PROPERTIES OUTPUT_NAME Disruptor)
-    list(APPEND disruptor_targets DisruptorStatic)
-endif()
-""",
-        )
-
-        replace_in_file(
-            self,
-            cmake_lists,
-            "install(TARGETS DisruptorShared DisruptorStatic",
-            "install(TARGETS ${disruptor_targets}",
-        )
-
-        stdafx = os.path.join(self.source_folder, "Disruptor", "stdafx.h")
-        replace_in_file(
-            self,
-            stdafx,
-            "#if _MSC_VER // only on Windows\n",
-            "#if _MSC_VER // only on Windows\n\n# ifndef NOMINMAX\n#  define NOMINMAX\n# endif\n",
-        )
-        replace_in_file(
-            self,
-            stdafx,
-            "# include <Windows.h>\n",
-            "# include <Windows.h>\n# ifdef max\n#  undef max\n# endif\n# ifdef min\n#  undef min\n# endif\n",
-        )
-
-        type_info = os.path.join(self.source_folder, "Disruptor", "TypeInfo.h")
-        replace_in_file(
-            self,
-            type_info,
-            "struct hash< Disruptor::TypeInfo > : public unary_function< Disruptor::TypeInfo, size_t >",
-            "struct hash< Disruptor::TypeInfo >",
-        )
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = CMakeToolchain(self)

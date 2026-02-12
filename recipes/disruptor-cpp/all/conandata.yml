@@ -2,3 +2,9 @@ sources:
   "1.0.0":
     url: "https://github.com/Abc-Arbitrage/Disruptor-cpp/archive/refs/tags/v1.0.0.tar.gz"
     sha256: "6bc82e5bc24a5dbcac445eb1d9a006f1d61c418348ab6f794478fc6b26ebf3ea"
+patches:
+  "1.0.0":
+    - patch_file: "patches/1.0.0-0001-build-fixes.patch"
+      patch_description: "Fix CMake ordering, shared/static selection, and MSVC/C++20+ compatibility."
+      patch_type: "conan"
+      patch_strip: 1
